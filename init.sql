@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS scans (
+    id VARCHAR(50) PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    result TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
