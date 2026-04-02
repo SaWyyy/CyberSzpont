@@ -10,14 +10,12 @@ from psycopg2.extras import RealDictCursor
 
 app = FastAPI(title="SecuScan Upload API")
 
-# Konfiguracja CORS (pozwala na komunikację z Reactem)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# Pobieranie konfiguracji ze zmiennych środowiskowych (Praktyka DevSecOps!)
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "minio:9000")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "admin")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "password123")
@@ -27,7 +25,6 @@ DB_USER = os.getenv("DB_USER", "secuser")
 DB_PASS = os.getenv("DB_PASS", "secpassword")
 DB_NAME = os.getenv("DB_NAME", "secuscan")
 
-# Klienci do usług zewnętrznych
 minio_client = Minio(MINIO_ENDPOINT, access_key=MINIO_ACCESS_KEY, secret_key=MINIO_SECRET_KEY, secure=False)
 redis_client = redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)
 
@@ -36,7 +33,6 @@ def get_db_connection():
 
 @app.on_event("startup")
 def startup_event():
-    # Sprawdzenie, czy bucket (magazyn) na pliki istnieje w MinIO
     if not minio_client.bucket_exists("uploads"):
         minio_client.make_bucket("uploads")
 
