@@ -1,63 +1,103 @@
-version: '3.8'
+version: "3.9"
+
+networks:
+  frontend_net:
+    driver: bridge
+  backend_net:
+    driver: bridge
+
+volumes:
+  db_data:
 
 services:
   # 1. BAZA DANYCH METADANYCH
   postgres:
-    image: postgres:15-alpine
+    image: bitnami/postgresql:latest
     environment:
-      POSTGRES_USER: secuser
-      POSTGRES_PASSWORD: secpassword
-      POSTGRES_DB: secuscan
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/bitnami/postgresql
+    networks:
+      - backend_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U secuser -d secuscan"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
     restart: unless-stopped
 
-  # 2. MESSAGE BROKER (KOLEJKA ZADAŃ)
+  # 2. MESSAGE BROKER
   redis:
-    image: redis:7-alpine
+    image: redis:alpine3.23
+    networks:
+      - backend_net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     restart: unless-stopped
 
-  # 3. MAGAZYN OBIEKTOWY (STORAGE NA PLIKI)
+  # 3. MAGAZYN OBIEKTOWY
   minio:
-    image: minio/minio
+    image: cgr.dev/chainguard/minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: password123
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
     ports:
-      - "9000:9000" # API
-      - "9001:9001" # Panel UI do podglądu plików
+      - "9000:9000"
+      - "9001:9001" 
+    networks:
+      - backend_net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
     restart: unless-stopped
 
   # 4. SILNIK SKANERA ANTYWIRUSOWEGO
   clamav:
-    image: clamav/clamav:latest
+    image: clamav/clamav:1.5.2
     environment:
       - CLAMAV_NO_FRESHCLAMD=true 
+    networks:
+      - backend_net
     healthcheck:
-      # Puka do portu 3310 i pyta czy ClamAV odpowiada
       test: ["CMD-SHELL", "echo 'PING' | nc -w 5 localhost 3310 | grep PONG || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 60 # Czeka maksymalnie 10 minut
+      retries: 60
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 2048M
     restart: unless-stopped
 
-  # 5. NASZE API (FASTAPI)
+  # 5. API FASTAPI
   upload-service:
     build: ./upload-service
     environment:
       MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: admin
-      MINIO_SECRET_KEY: password123
+      MINIO_ACCESS_KEY: ${MINIO_USER}
+      MINIO_SECRET_KEY: ${MINIO_PASSWORD}
       REDIS_HOST: redis
       DB_HOST: postgres
-      DB_USER: secuser
-      DB_PASS: secpassword
-      DB_NAME: secuscan
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    networks:
+      - frontend_net
+      - backend_net
     depends_on:
       postgres:
         condition: service_healthy
@@ -65,21 +105,28 @@ services:
         condition: service_started
       minio:
         condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     restart: unless-stopped
 
-  # 6. NASZ WORKER SKANUJĄCY (PYTHON)
+  # 6. WORKER SKANUJĄCY
   scanner-worker:
     build: ./scanner-worker
     environment:
       MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: admin
-      MINIO_SECRET_KEY: password123
+      MINIO_ACCESS_KEY: ${MINIO_USER}
+      MINIO_SECRET_KEY: ${MINIO_PASSWORD}
       REDIS_HOST: redis
       DB_HOST: postgres
-      DB_USER: secuser
-      DB_PASS: secpassword
-      DB_NAME: secuscan
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
       CLAMAV_HOST: clamav
+    networks:
+      - backend_net
     depends_on:
       redis:
         condition: service_started
@@ -87,23 +134,42 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
     restart: unless-stopped
 
-  # 7. FRONTEND (REACT + NGINX)
+  # 7. FRONTEND
   frontend:
     build: ./frontend
+    networks:
+      - frontend_net
     depends_on:
       - upload-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
     restart: unless-stopped
 
-  # 8. API GATEWAY (Główny strażnik - jedyny otwarty na świat)
+  # 8. API GATEWAY
   api-gateway:
-    image: nginx:alpine
+    image: dhi.io/nginx:1-debian13-dev
     ports:
       - "80:80"
     volumes:
       - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - frontend_net
     depends_on:
       - frontend
       - upload-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
     restart: unless-stopped
