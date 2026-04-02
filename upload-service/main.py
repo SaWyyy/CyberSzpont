@@ -46,18 +46,15 @@ async def upload_file(file: UploadFile = File(...)):
     filename = file.filename
 
     try:
-        # Obliczenie rozmiaru pliku (potrzebne dla MinIO)
         file.file.seek(0, 2)
         file_size = file.file.tell()
         file.file.seek(0)
         
-        # 1. Zapis pliku do izolowanego magazynu MinIO (S3)
         minio_client.put_object("uploads", file_id, file.file, length=file_size, part_size=10*1024*1024)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Błąd zapisu pliku w magazynie.")
 
     try:
-        # 2. Utworzenie rekordu w bazie danych PostgreSQL
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
@@ -71,7 +68,6 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Błąd zapisu w bazie danych.")
 
     try:
-        # 3. Wysłanie zadania do kolejki Redis (Message Broker)
         task = {"id": file_id, "filename": filename}
         redis_client.lpush("scan_queue", json.dumps(task))
     except Exception as e:
@@ -84,7 +80,6 @@ def get_results():
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        # Pobieranie 20 ostatnich skanowań
         cur.execute("SELECT id, filename, status, result FROM scans ORDER BY created_at DESC LIMIT 20")
         rows = cur.fetchall()
         cur.close()

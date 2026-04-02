@@ -90,14 +90,11 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Kolumna lewa: Upload i Statusy (1/3 szerokości) */}
           <div className="lg:col-span-4 space-y-6">
             
-            {/* Karta Uploadu */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="p-5 border-b border-slate-100">
                 <h2 className="text-lg font-semibold text-slate-800">Skaner Plików</h2>
@@ -141,7 +138,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Karta Statusu Architektury (Bajer dla prowadzącego) */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                 <h3 className="text-sm font-semibold text-slate-800">Status Mikrousług</h3>
@@ -163,7 +159,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Kolumna prawa: Historia skanowań (2/3 szerokości) */}
           <div className="lg:col-span-8">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
               <div className="p-5 border-b border-slate-100 flex justify-between items-center">
