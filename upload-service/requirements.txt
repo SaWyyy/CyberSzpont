@@ -1,6 +1,8 @@
-fastapi==0.110.0
+fastapi>=0.115.0
+starlette>=0.40.0
 uvicorn==0.27.1
-python-multipart==0.0.9
+python-multipart==0.0.22
 minio==7.2.4
 redis==5.0.3
 psycopg2-binary==2.9.9
+wheel>=0.46.2
