@@ -10,14 +10,13 @@ volumes:
 services:
   # 1. BAZA DANYCH METADANYCH
   postgres:
-    image: bitnami/postgresql:latest
+    image: dhi.io/postgres:17-alpine3.22
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - db_data:/bitnami/postgresql
+      - db_data:/var/lib/postgresql/17/data
     networks:
       - backend_net
     healthcheck:
@@ -27,9 +26,24 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
     restart: unless-stopped
+
+  # 1.5. DATABASE INITIALIZER
+  db-init:
+    image: postgres:17-alpine
+    volumes:
+      - ./init.sql:/init.sql
+    networks:
+      - backend_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+    command: >
+      sh -c "psql -h postgres -U ${DB_USER} -d ${DB_NAME} -f /init.sql && echo 'INIT FINISHED'"
 
   # 2. MESSAGE BROKER
   redis:
@@ -39,7 +53,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
     restart: unless-stopped
 
@@ -52,13 +66,13 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
     ports:
       - "9000:9000"
-      - "9001:9001" 
+      - "9001:9001"
     networks:
       - backend_net
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
     restart: unless-stopped
 
@@ -66,18 +80,22 @@ services:
   clamav:
     image: clamav/clamav:1.5.2
     environment:
-      - CLAMAV_NO_FRESHCLAMD=true 
+      - CLAMAV_NO_FRESHCLAMD=true
     networks:
       - backend_net
     healthcheck:
-      test: ["CMD-SHELL", "echo 'PING' | nc -w 5 localhost 3310 | grep PONG || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "echo 'PING' | nc -w 5 localhost 3310 | grep PONG || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 60
     deploy:
       resources:
         limits:
-          cpus: '1.5'
+          cpus: "1.5"
           memory: 2048M
     restart: unless-stopped
 
@@ -97,6 +115,8 @@ services:
       - frontend_net
       - backend_net
     depends_on:
+      db-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -106,7 +126,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
     restart: unless-stopped
 
@@ -130,12 +150,14 @@ services:
         condition: service_started
       clamav:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
     restart: unless-stopped
 
@@ -149,7 +171,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 128M
     restart: unless-stopped
 
@@ -168,6 +190,6 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 128M
     restart: unless-stopped
