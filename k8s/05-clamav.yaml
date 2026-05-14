@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: clamav-svc
+  namespace: secuscan-ns
+spec:
+  selector:
+    app: clamav
+  ports:
+    - protocol: TCP
+      port: 3310
+      targetPort: 3310
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clamav
+  namespace: secuscan-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clamav
+  template:
+    metadata:
+      labels:
+        app: clamav
+    spec:
+      containers:
+        - name: clamav
+          image: clamav/clamav:1.5.2-debian
+          ports:
+            - containerPort: 3310
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1"
