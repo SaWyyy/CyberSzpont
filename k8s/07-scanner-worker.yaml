@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scanner-worker
+  namespace: secuscan-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: scanner-worker
+  template:
+    metadata:
+      labels:
+        app: scanner-worker
+    spec:
+      containers:
+        - name: scanner-worker
+          image: sawyyy/secuscan-scanner-worker:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: secuscan-config
+          env:
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: secuscan-secrets
+                  key: DB_PASS
+            - name: MINIO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secuscan-secrets
+                  key: MINIO_PASSWORD
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
