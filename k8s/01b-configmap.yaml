@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secuscan-config
+  namespace: secuscan-ns
+data:
+  DB_USER: secuser
+  DB_NAME: secuscan
+  MINIO_USER: admin
+  DB_HOST: postgres-svc
+  REDIS_HOST: redis-svc
+  MINIO_ENDPOINT: minio-svc:9000
+  CLAMAV_HOST: clamav-svc
