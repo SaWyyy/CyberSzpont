@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init-job
+  namespace: secuscan-ns
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: db-init
+          image: alpine:3.19
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secuscan-secrets
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: init-script
+              mountPath: /init.sql
+              subPath: init.sql
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache postgresql-client
+              while ! nc -z postgres-svc 5432; do sleep 2; done;
+              psql -h postgres-svc -U secuser -d secuscan -f /init.sql
+      volumes:
+        - name: init-script
+          configMap:
+            name: postgres-init-script
