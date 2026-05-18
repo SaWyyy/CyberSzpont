@@ -57,7 +57,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: secuscan-secrets
-                  key: DB_PASSWORD
+                  key: DB_PASS
             - name: POSTGRES_DB
               valueFrom:
                 configMapKeyRef:
