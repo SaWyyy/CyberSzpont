@@ -46,6 +46,9 @@ spec:
         - podSelector:
             matchLabels:
               app: scanner-worker
+        - podSelector:
+            matchLabels:
+              app: db-init-job
       ports:
         - protocol: TCP
           port: 5432
