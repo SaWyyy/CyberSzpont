@@ -60,7 +60,7 @@ As we can see on the screenshot above, this image is free of vulnerabilities.
 
 ## Getting Started
 
-To get started with the project, follow the steps below:
+### Using Docker
 
 1. Clone the repository:
 
@@ -78,3 +78,49 @@ To get started with the project, follow the steps below:
    ```
 
 4. The application is available at `localhost:80`
+
+### Using Minikube
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/SaWyyy/SecuScan
+   cd SecuScan
+   ```
+
+2. Set up variables in _k8s/01a-secrets.yaml_ file in Base64 format.
+
+3. Launch Minikube with two nodes:
+
+   ```bash
+   minikube start -n 2
+   ```
+
+4. Execute setup script:
+   * **Windows:**
+     Open PowerShell then type: `.\setup.ps1`
+   * **Linux/MacOS:**
+     ```bash
+     chmod +x setup.sh
+     ./setup.sh
+     ```
+You will need to type your Docker username and PAT (Personal Access Token) because of using hardened postgres image from `dhi.io`. But don't worry, its all local.
+
+5. Set up local domain:
+   * **Windows:**
+     1. Navigate to `C:\Windows\System32\drivers\etc\hosts`
+     2. Open file as administrator
+     3. Add `127.0.0.1 secuscan.local` at the end of file
+   * **Linux/MacOS:**
+     1. Open terminal and type: `sudo nano /etc/hosts`
+     2. Add `127.0.0.1 secuscan.local` at the end of file
+
+For linux sometimes works IP address of minikube cluster, you can get it by typing `minikube ip` in terminal.  
+Remember to safe this file.
+
+6. Open new terminal and enable minikube tunnel by typing:
+   ```bash
+   minikube tunnel
+  ```
+   
+7. The application is available at `http://secuscan.local`
