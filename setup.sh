@@ -13,6 +13,11 @@ echo ""
 
 echo "[1/5] Enabling ingress addon..."
 minikube addons enable ingress
+kubectl wait --namespace ingress-nginx `
+  --for=condition=ready pod `
+  --selector=app.kubernetes.io/component=controller `
+  --timeout=120s
+sleep 5
 
 echo "[2/5] Creating namespace 'secuscan-ns'..."
 kubectl apply -f k8s/00-namespace.yaml

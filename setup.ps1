@@ -12,6 +12,12 @@ $DockerPass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
 Write-Host "[1/5] Enabling ingress addon..." -ForegroundColor Yellow
 minikube addons enable ingress
+kubectl wait --namespace ingress-nginx `
+  --for=condition=ready pod `
+  --selector=app.kubernetes.io/component=controller `
+  --timeout=120s
+
+Start-Sleep -Seconds 5
 
 Write-Host ""
 Write-Host "[2/5] Creating namespace 'secuscan-ns'..." -ForegroundColor Yellow
