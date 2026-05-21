@@ -116,7 +116,7 @@ You will need to type your Docker username and PAT (Personal Access Token) becau
      2. Add `127.0.0.1 secuscan.local` at the end of file
 
 For linux sometimes works IP address of minikube cluster, you can get it by typing `minikube ip` in terminal.  
-Remember to safe this file.
+Remember to save this file.
 
 6. Open new terminal and enable minikube tunnel by typing:
    ```bash
