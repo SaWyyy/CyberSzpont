@@ -6,7 +6,7 @@ Z racji charakteru rozwijanego systemu, wdrożono trzy krytyczne mechanizmy z po
 Każdy kontener w deploymentach (np. interfejs frontendowy) ma zdefiniowane sekcje `resources`.
 * Zdefiniowano `requests` (np. 64Mi RAM, 50m CPU) gwarantujące minimalny zasób do startu.
 * Zdefiniowano `limits` (np. 128Mi RAM, 200m CPU) nakładające bezwzględny, górny pułap zużycia.
-* W przypadku, gdyby skaner antywirusowy (ClamAV) lub API zostało przeciążone przesyłaniem dużego pliku, kontener zostanie wstrzymany i zrestartowany, a nie wysyci całego procesora maszyny hosta, co mogłoby doprowadzić do awarii całego klastra.
+* W przypadku, gdyby skaner antywirusowy (ClamAV) lub API zostało przeciążone przesyłaniem dużego pliku, kontener zostanie wstrzymany i zrestartowany, zapobiegając zajęciu całej mocy obliczeniowej procesora maszyny hosta, co mogłoby doprowadzić do awarii całego klastra.
 
 ### 2.2 Polityki sieciowe
 Wdrożono zaawansowaną architekturę Zero-Trust w obrębie całego namespace'u.

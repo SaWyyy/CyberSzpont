@@ -40,4 +40,4 @@ Trwałość danych zrealizowano z wykorzystaniem `PersistentVolumeClaims`.
 Projekt w pełni oddziela kod aplikacji od konfiguracji.
 * **ConfigMap (`secuscan-config`):** Przechowuje dane jawne, takie jak nazwa bazy danych (`DB_NAME`), login użytkownika (`DB_USER`) oraz adresy wewnętrzne usług. 
 * **Secrets (`secuscan-secrets`, `dhi-registry-secret`):** Przechowuje krytyczne hasła (kodowane algorytmem Base64) oraz tokeny do zewnętrznych rejestrów obrazów (jako typ `kubernetes.io/dockerconfigjson`).
-* Rozdzielenie tych obiektów pozwala na trzymanie infrastruktury w repozytorium GitHub, przy jednoczesnym ignorowaniu plików z sekretami (`.gitignore`), co całkowicie zapobiega wyciekom danych uwierzytelniających (Secret Leaks).
+* Rozdzielenie tych obiektów pozwala na trzymanie infrastruktury w repozytorium GitHub, przy jednoczesnym ignorowaniu plików z sekretami (`.gitignore`), co całkowicie zapobiega wyciekom danych uwierzytelniających.
