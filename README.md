@@ -121,6 +121,6 @@ Remember to safe this file.
 6. Open new terminal and enable minikube tunnel by typing:
    ```bash
    minikube tunnel
-  ```
+   ```
    
 7. The application is available at `http://secuscan.local`
