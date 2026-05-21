@@ -13,6 +13,19 @@ spec:
       labels:
         app: scanner-worker
     spec:
+      affinity:
+         affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - scanner-worker
+                  topologyKey: "kubernetes.io/hostname"
       containers:
         - name: scanner-worker
           image: sawyyy/secuscan-scanner-worker:latest
