@@ -13,9 +13,9 @@ echo ""
 
 echo "[1/5] Enabling ingress addon..."
 minikube addons enable ingress
-kubectl wait --namespace ingress-nginx `
-  --for=condition=ready pod `
-  --selector=app.kubernetes.io/component=controller `
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
   --timeout=120s
 sleep 5
 
