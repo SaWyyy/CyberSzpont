@@ -43,7 +43,16 @@ spec:
       containers:
         - name: upload-service
           image: sawyyy/secuscan-upload-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+          readinessProbe:
+            httpGet:
+              path: /api/results
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 10
           ports:
             - containerPort: 8000
           envFrom:

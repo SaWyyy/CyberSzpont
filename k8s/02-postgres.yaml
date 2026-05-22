@@ -4,13 +4,13 @@ metadata:
   name: postgres-svc
   namespace: secuscan-ns
 spec:
+  clusterIP: None
   selector:
     app: postgres
   ports:
     - protocol: TCP
       port: 5432
       targetPort: 5432
-  type: ClusterIP
 
 ---
 apiVersion: apps/v1
@@ -42,8 +42,23 @@ spec:
       containers:
         - name: postgres
           image: dhi.io/postgres:17-alpine3.22
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 70
           ports:
             - containerPort: 5432
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - "$(POSTGRES_USER)"
+                - -d
+                - "$(POSTGRES_DB)"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
           envFrom:
             - configMapRef:
                 name: secuscan-config

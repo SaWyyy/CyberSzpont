@@ -33,6 +33,14 @@ spec:
           image: clamav/clamav:1.5.2-debian
           ports:
             - containerPort: 3310
+          imagePullPolicy: Always
+          readinessProbe:
+            tcpSocket:
+              port: 3310
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 6
           resources:
             requests:
               memory: "1Gi"

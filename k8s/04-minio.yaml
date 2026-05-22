@@ -4,6 +4,7 @@ metadata:
   name: minio-svc
   namespace: secuscan-ns
 spec:
+  clusterIP: None
   selector:
     app: minio
   ports:
@@ -15,7 +16,6 @@ spec:
       protocol: TCP
       port: 9001
       targetPort: 9001
-  type: ClusterIP
 
 ---
 apiVersion: apps/v1
@@ -47,6 +47,10 @@ spec:
       containers:
         - name: minio
           image: cgr.dev/chainguard/minio
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
           command:
             - /bin/sh
             - -c
@@ -54,6 +58,12 @@ spec:
           ports:
             - containerPort: 9000
             - containerPort: 9001
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 10
           env:
             - name: MINIO_ROOT_USER
               valueFrom:

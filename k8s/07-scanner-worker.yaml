@@ -14,22 +14,31 @@ spec:
         app: scanner-worker
     spec:
       affinity:
-         affinity:
-          podAntiAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-              - weight: 100
-                podAffinityTerm:
-                  labelSelector:
-                    matchExpressions:
-                      - key: app
-                        operator: In
-                        values:
-                          - scanner-worker
-                  topologyKey: "kubernetes.io/hostname"
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - scanner-worker
+                topologyKey: "kubernetes.io/hostname"
       containers:
         - name: scanner-worker
           image: sawyyy/secuscan-scanner-worker:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /etc/os-release
+            initialDelaySeconds: 2
+            periodSeconds: 10
           envFrom:
             - configMapRef:
                 name: secuscan-config
