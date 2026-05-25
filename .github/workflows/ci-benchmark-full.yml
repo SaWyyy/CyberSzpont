@@ -32,13 +32,30 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: 2a. Budowa obrazu Backend (Upload Service)
+      - name: 4. Uruchomienie monitorowania zasobów hosta (Profiler)
+        run: |
+          echo "=== PROFILER ROZPOCZĄŁ PRACĘ ===" > resource_benchmark.log
+          
+          while true; do
+            TIMESTAMP=$(date +%H:%M:%S)
+            
+            CPU_USAGE=$(vmstat 1 2 | tail -1 | awk '{print 100-$15}')
+            
+            RAM_USAGE=$(free -m | awk 'NR==2{printf "%sMB / %sMB (%.2f%%)", $3, $2, $3*100/$2}')
+            
+            echo "$TIMESTAMP | CPU: $CPU_USAGE% | RAM: $RAM_USAGE" >> resource_benchmark.log
+            sleep 5
+          done &
+          
+          echo $! > profiler_pid.txt
+      
+      - name: 4a. Budowa obrazu Backend (Upload Service)
         run: docker build -t secuscan-api:test ./upload-service
 
-      - name: 2b. Budowa obrazu Frontend
+      - name: 4b. Budowa obrazu Frontend
         run: docker build -t secuscan-frontend:test ./frontend
 
-      - name: 2c. Budowa obrazu Worker (Scanner Worker)
+      - name: 4c. Budowa obrazu Worker (Scanner Worker)
         run: docker build -t secuscan-worker:test ./scanner-worker
 
       # ========================================================================
@@ -144,3 +161,16 @@ jobs:
       - name: Sprzątanie po skanerze DAST
         if: ${{ github.event.inputs.scan_mode == 'dynamic' && always() }}
         run: docker compose down -v
+
+      - name: Wyłączenie profilera i zapisanie wyników do pliku
+        if: always()
+        run: |
+          echo "=== PROFILER ZAKOŃCZYŁ PRACĘ ===" >> resource_benchmark.log
+          kill $(cat profiler_pid.txt) || true
+
+      - name: Wgranie raportu zużycia CPU/RAM jako Artefakt binarnego
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.scan_mode }}-resource-metrics
+          path: resource_benchmark.log
