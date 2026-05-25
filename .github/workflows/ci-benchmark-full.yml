@@ -83,6 +83,12 @@ jobs:
       - name: Uruchomienie środowiska (docker-compose)
         if: ${{ github.event.inputs.scan_mode == 'dynamic' }}
         run: |
+          touch .env
+          echo "DB_USER=test_user" >> .env
+          echo "DB_PASSWORD=test_password_123" >> .env
+          echo "DB_NAME=test_db" >> .env
+          echo "MINIO_USER=minio_admin" >> .env
+          echo "MINIO_PASSWORD=minio_password_123" >> .env
           docker compose up -d
           echo "Czekam 45 sekund na pełne podniesienie baz danych i serwisów..."
           sleep 45
