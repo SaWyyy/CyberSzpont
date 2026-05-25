@@ -28,10 +28,10 @@ jobs:
       - name: Instalacja zależności
         run: pip install -r requirements.txt
         
-      #- name: SAST Scan (Semgrep)
-      #  run: |
-      #    pip install semgrep
-      #    semgrep scan --config=auto
+      - name: SAST Scan (Semgrep)
+        run: |
+          pip install semgrep
+          semgrep scan --config=auto
       
       - name: Budowa obrazu Docker
         run: docker build -t secuscan-api:test .
