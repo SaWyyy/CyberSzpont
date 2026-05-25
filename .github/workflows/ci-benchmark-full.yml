@@ -17,6 +17,11 @@ jobs:
     name: Uruchomienie badań bezpieczeństwa
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
     steps:
       - name: 1. Pobranie kodu
         uses: actions/checkout@v4
@@ -80,25 +85,39 @@ jobs:
           output: 'trivy-worker-results.sarif'
           
       - name: Wgranie raportu Checkov do GitHuba
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: ${{ github.event.inputs.scan_mode == 'static' && always() }}
         with:
-          sarif_file: checkov-results.sarif
+          sarif_file: checkov-results.sarif/results_sarif.sarif
           category: checkov-iac
           
       - name: Wgranie raportu Semgrep do GitHuba
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: ${{ github.event.inputs.scan_mode == 'static' && always() }}
         with:
           sarif_file: semgrep-results.sarif
           category: semgrep-sast
       
-      - name: Wgranie raportów Trivy do GitHuba
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Wgranie raportu Trivy (Backend)
+        uses: github/codeql-action/upload-sarif@v4
         if: ${{ github.event.inputs.scan_mode == 'static' && always() }}
         with:
-          sarif_file: . 
-          category: trivy-sca
+          sarif_file: trivy-backend-results.sarif
+          category: trivy-sca-backend
+
+      - name: Wgranie raportu Trivy (Frontend)
+        uses: github/codeql-action/upload-sarif@v4
+        if: ${{ github.event.inputs.scan_mode == 'static' && always() }}
+        with:
+          sarif_file: trivy-frontend-results.sarif
+          category: trivy-sca-frontend
+          
+      - name: Wgranie raportu Trivy (Worker)
+        uses: github/codeql-action/upload-sarif@v4
+        if: ${{ github.event.inputs.scan_mode == 'static' && always() }}
+        with:
+          sarif_file: trivy-worker-results.sarif 
+          category: trivy-sca-worker
 
       # ========================================================================
       # SCENARIUSZ B: FULL DYNAMIC (Docker Compose + OWASP ZAP)
