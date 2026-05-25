@@ -90,8 +90,6 @@ jobs:
           echo "MINIO_USER=minio_admin" >> .env
           echo "MINIO_PASSWORD=minio_password_123" >> .env
           docker compose up -d
-          echo "Czekam 45 sekund na pełne podniesienie baz danych i serwisów..."
-          sleep 45
 
       - name: OWASP ZAP Baseline Scan
         if: ${{ github.event.inputs.scan_mode == 'dynamic' }}
