@@ -77,7 +77,7 @@ jobs:
       - name: Uruchomienie środowiska (docker-compose)
         if: ${{ github.event.inputs.scan_mode == 'dynamic' }}
         run: |
-          docker-compose up -d
+          docker compose up -d
           echo "Czekam 45 sekund na pełne podniesienie baz danych i serwisów..."
           sleep 45
 
