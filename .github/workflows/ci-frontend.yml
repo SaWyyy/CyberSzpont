@@ -28,10 +28,10 @@ jobs:
       - name: Instalacja zależności (npm)
         run: npm install
 
-      # - name: SAST Scan (Semgrep)
-      #   run: |
-      #     pip install semgrep
-      #     semgrep scan --config=auto
+      - name: SAST Scan (Semgrep)
+        run: |
+          pip install semgrep
+          semgrep scan --config=auto
 
       - name: Budowa kodu i obrazu Docker
         run: |
