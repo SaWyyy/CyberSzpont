@@ -1,0 +1,100 @@
+name: "Static vs Dynamic Scan"
+
+on:
+  workflow_dispatch:
+    inputs:
+      scan_mode:
+        description: 'Wybierz paradygmat skanowania'
+        required: true
+        default: 'static'
+        type: choice
+        options:
+          - 'static'
+          - 'dynamic'
+
+jobs:
+  run_security_benchmark:
+    name: Uruchomienie badań bezpieczeństwa
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Pobranie kodu
+        uses: actions/checkout@v4
+      - name: 2. Logowanie do rejestru dhi.io
+        uses: docker/login-action@v3
+        with:
+          registry: dhi.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 2a. Budowa obrazu Backend (Upload Service)
+        run: docker build -t secuscan-api:test ./upload-service
+
+      - name: 2b. Budowa obrazu Frontend
+        run: docker build -t secuscan-frontend:test ./frontend
+
+      - name: 2c. Budowa obrazu Worker (Scanner Worker)
+        run: docker build -t secuscan-worker:test ./scanner-worker
+
+      # ========================================================================
+      # SCENARIUSZ A: FULL STATIC (SAST + SCA + IaC)
+      # ========================================================================
+      - name: Skanowanie IaC (Checkov dla folderu k8s)
+        if: ${{ github.event.inputs.scan_mode == 'static' }}
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: k8s/
+          framework: kubernetes
+          soft_fail: true
+
+      - name: Skanowanie SAST całej aplikacji (Semgrep)
+        if: ${{ github.event.inputs.scan_mode == 'static' }}
+        run: |
+          pip install semgrep
+          semgrep scan --config=auto || true
+
+      - name: Skanowanie SCA Backend (Trivy)
+        if: ${{ github.event.inputs.scan_mode == 'static' }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'secuscan-api:test'
+          format: 'table'
+          exit-code: '0'
+
+      - name: Skanowanie SCA Frontend (Trivy)
+        if: ${{ github.event.inputs.scan_mode == 'static' }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'secuscan-frontend:test'
+          format: 'table'
+          exit-code: '0'
+          
+      - name: Skanowanie SCA Worker (Trivy)
+        if: ${{ github.event.inputs.scan_mode == 'static' }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'secuscan-worker:test'
+          format: 'table'
+          exit-code: '0'
+
+      # ========================================================================
+      # SCENARIUSZ B: FULL DYNAMIC (Docker Compose + OWASP ZAP)
+      # ========================================================================
+      - name: Uruchomienie środowiska (docker-compose)
+        if: ${{ github.event.inputs.scan_mode == 'dynamic' }}
+        run: |
+          docker compose up -d
+          echo "Czekam 45 sekund na pełne podniesienie baz danych i serwisów..."
+          sleep 45
+
+      - name: OWASP ZAP Baseline Scan
+        if: ${{ github.event.inputs.scan_mode == 'dynamic' }}
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://localhost:8080'
+          fail_action: false
+          allow_issue_writing: false
+
+      - name: Sprzątanie po skanerze DAST
+        if: ${{ github.event.inputs.scan_mode == 'dynamic' && always() }}
+        run: docker compose down -v
