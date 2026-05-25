@@ -46,36 +46,59 @@ jobs:
           directory: k8s/
           framework: kubernetes
           soft_fail: true
+          output_format: sarif
+          output_file_path: checkov-results.sarif
 
       - name: Skanowanie SAST całej aplikacji (Semgrep)
         if: ${{ github.event.inputs.scan_mode == 'static' }}
         run: |
           pip install semgrep
-          semgrep scan --config=auto || true
+          semgrep scan --config=auto --sarif --output semgrep-results.sarif || true
 
       - name: Skanowanie SCA Backend (Trivy)
         if: ${{ github.event.inputs.scan_mode == 'static' }}
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'secuscan-api:test'
-          format: 'table'
-          exit-code: '0'
+          format: 'sarif'
+          output: 'trivy-backend-results.sarif'
 
       - name: Skanowanie SCA Frontend (Trivy)
         if: ${{ github.event.inputs.scan_mode == 'static' }}
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'secuscan-frontend:test'
-          format: 'table'
-          exit-code: '0'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
           
       - name: Skanowanie SCA Worker (Trivy)
         if: ${{ github.event.inputs.scan_mode == 'static' }}
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'secuscan-worker:test'
-          format: 'table'
-          exit-code: '0'
+          format: 'sarif'
+          output: 'trivy-worker-results.sarif'
+          
+      - name: Wgranie raportu Checkov do GitHuba
+        uses: github/codeql-action/upload-sarif@v3
+        if: ${{ github.event.inputs.scan_mode == 'static' && always() }}
+        with:
+          sarif_file: checkov-results.sarif
+          category: checkov-iac
+          
+      - name: Wgranie raportu Semgrep do GitHuba
+        uses: github/codeql-action/upload-sarif@v3
+        if: ${{ github.event.inputs.scan_mode == 'static' && always() }}
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep-sast
+      
+      - name: Wgranie raportów Trivy do GitHuba
+        uses: github/codeql-action/upload-sarif@v3
+        if: ${{ github.event.inputs.scan_mode == 'static' && always() }}
+        with:
+          sarif_file: . 
+          category: trivy-sca
 
       # ========================================================================
       # SCENARIUSZ B: FULL DYNAMIC (Docker Compose + OWASP ZAP)
