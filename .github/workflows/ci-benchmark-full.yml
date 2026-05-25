@@ -62,6 +62,14 @@ jobs:
           image-ref: 'secuscan-frontend:test'
           format: 'table'
           exit-code: '0'
+          
+      - name: Skanowanie SCA Worker (Trivy)
+        if: ${{ github.event.inputs.scan_mode == 'static' }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'secuscan-worker:test'
+          format: 'table'
+          exit-code: '0'
 
       # ========================================================================
       # SCENARIUSZ B: FULL DYNAMIC (Docker Compose + OWASP ZAP)
